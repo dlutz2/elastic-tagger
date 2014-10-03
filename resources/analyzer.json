@@ -1,0 +1,10 @@
+{"analysis": {
+       "analyzer": {
+            "tagger" : {
+                "type" : "custom", 
+                "tokenizer" : "keyword",
+                "filter" : [ "standard", "lowercase"]
+            }
+        }
+    }
+}

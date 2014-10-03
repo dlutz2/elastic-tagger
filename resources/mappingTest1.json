@@ -1,0 +1,38 @@
+{
+	".tagger":{
+		"properties":{
+			"documentRefs":{
+				"properties":{
+					"id":{
+						"type":"string"
+					},
+					"index":{
+						"type":"string"
+					},
+					"type":{
+						"type":"string"
+					}
+					
+				}
+				
+			},
+			"field":{
+				"type":"string"
+			},
+			"index":{
+				"type":"string"
+			},
+			"name":{
+				"type":"string",
+				"index_analyzer":"tagger",
+				"search_analyzer":"standard"
+			},
+			"type":{
+				"type":"string"
+			}
+			
+		}
+		
+	}
+	
+}

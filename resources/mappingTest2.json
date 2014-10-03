@@ -1,0 +1,96 @@
+{
+	"records":{
+		"properties":{
+			"baseName":{
+				"type":"string"
+			},
+			"numberOfPlaces":{
+				"type":"long"
+			},
+			"places":{
+				"type":"nested",
+				"properties":{
+					"abbreviation":{
+						"type":"boolean"
+					},
+					"acountry":{
+						"type":"boolean"
+					},
+					"admin1":{
+						"type":"string"
+					},
+					"admin2":{
+						"type":"string"
+					},
+					"anAdmin1":{
+						"type":"boolean"
+					},
+					"countryCode":{
+						"type":"string"
+					},
+					"expandedPlaceName":{
+						"type":"string"
+					},
+					"featureClass":{
+						"type":"string"
+					},
+					"featureCode":{
+						"type":"string"
+					},
+					"geocoord":{
+						"properties":{
+							"isValid":{
+								"type":"boolean"
+							},
+							"latitude":{
+								"type":"double"
+							},
+							"longitude":{
+								"type":"double"
+							},
+							"precision":{
+								"type":"long"
+							}
+							
+						}
+						
+					},
+					"idBias":{
+						"type":"double"
+					},
+					"latitude":{
+						"type":"double"
+					},
+					"longitude":{
+						"type":"double"
+					},
+					"nameBias":{
+						"type":"double"
+					},
+					"nameType":{
+						"type":"string"
+					},
+					"nameTypeSystem":{
+						"type":"string"
+					},
+					"nationalCapital":{
+						"type":"boolean"
+					},
+					"placeID":{
+						"type":"string"
+					},
+					"placeName":{
+						"type":"string"
+					},
+					"source":{
+						"type":"string"
+					}
+					
+				}
+				
+			}
+			
+		}
+		
+	}
+}
