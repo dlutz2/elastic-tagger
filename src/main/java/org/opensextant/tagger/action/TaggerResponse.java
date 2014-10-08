@@ -1,6 +1,7 @@
 package org.opensextant.tagger.action;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.elasticsearch.action.ShardOperationFailedException;
@@ -11,7 +12,7 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 public class TaggerResponse extends BroadcastOperationResponse {
 
 	// the list of tags
-	private List<Tag> tags;
+	private List<Tag> tags = new ArrayList<Tag>();
 
 	TaggerResponse() {
 	}
@@ -27,6 +28,9 @@ public class TaggerResponse extends BroadcastOperationResponse {
 	 * @return the tags
 	 */
 	public List<Tag> getTags() {
+		if(tags == null){
+			return new ArrayList<Tag>();
+		}
 		return tags;
 	}
 

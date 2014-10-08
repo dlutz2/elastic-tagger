@@ -79,6 +79,14 @@ public class Tag implements Streamable {
 		}
 	}
 	
+	public String toString(){
+		StringBuffer buf = new StringBuffer();
+		buf.append(this.getMatchText() );
+		buf.append(" (" + this.getStart() + "," + this.getEnd() + ")" );
+		
+		return buf.toString();
+	}
+	
 	
 	
 	@Override
@@ -90,8 +98,14 @@ public class Tag implements Streamable {
 		int docEntries = in.readInt();
 		for (int i = 0; i < docEntries; i++) {
 			String key = in.readString();
-			List<ElasticDocument> value = (List<ElasticDocument>) in.readGenericValue();
-			this.docs.put(key, value);
+			int cnt = in.readInt();
+			List<ElasticDocument> docList = new ArrayList<ElasticDocument>();
+			for(int c=0; c < cnt; c++){
+				ElasticDocument d = new ElasticDocument();
+				d.readFrom(in);
+				docList.add((d));
+			}	
+			this.docs.put(key, docList);
 		}
 
 	}
@@ -105,7 +119,11 @@ public class Tag implements Streamable {
 		out.writeInt(this.docs.size());
 		for (Entry<String, List<ElasticDocument>> entry : this.docs.entrySet()) {
 			out.writeString(entry.getKey());
-			out.writeGenericValue(entry.getValue());
+			int cnt = entry.getValue().size();
+			out.writeInt(cnt);
+			for(int i=0; i < cnt; i++){
+				entry.getValue().get(i).writeTo(out);
+			}
 		}
 
 	}

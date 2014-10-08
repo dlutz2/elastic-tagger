@@ -2,9 +2,7 @@ package org.opensextant.tagger.action;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
@@ -37,6 +35,8 @@ import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.opensextant.solrtexttagger.TagClusterReducer;
 import org.opensextant.solrtexttagger.Tagger;
+import org.opensextant.tagger.interval.Interval;
+import org.opensextant.tagger.interval.IntervalTree;
 
 public class TransportTaggerAction
 		extends
@@ -76,10 +76,14 @@ public class TransportTaggerAction
 		int failedShards = 0;
 		List<ShardOperationFailedException> shardFailures = null;
 
+		// an interval tree to store all returned Tags 
+		IntervalTree<Tag> tree = new IntervalTree<Tag>();
+		
+		
+		
 		// the accumulated tags from all shards
-		List<Tag> tags = new ArrayList<Tag>();
-		// the tags organized by a hash of their start and end points
-		 Map<String,List<Tag>> mergeMap = new HashMap<String,List<Tag>>();
+		//List<Tag> tags = new ArrayList<Tag>();
+
 		
 		// look at all the shard responses
 		for (int i = 0; i < shardsResponses.length(); i++) {
@@ -99,8 +103,8 @@ public class TransportTaggerAction
 				if (shardResponse instanceof ShardTaggerResponse) {
 					// cast to expected type
 					ShardTaggerResponse shardresp = (ShardTaggerResponse) shardResponse;
-					// add the tags from this shard to the accumulated tags
-					merge(shardresp.getTags(), mergeMap);
+					// add the tags from this shard to the accumulated tags in the tree
+					addToTree(tree,shardresp.getTags());
 
 				} else {
 					// what to do here? we got a response that succeeded but not
@@ -109,62 +113,91 @@ public class TransportTaggerAction
 			}// end of successful shard
 		}// end of shard loop
 
-		// reduce the total set of overlapping/interacting tags according to the
-		// requested mode
-		reduceMergeMap(tags,mergeMap);
-		reduceTagClusters(tags, request.getReduceMode());
+		// reduce the total set of overlapping/interacting tags according to the reduce mode
+		reduceTree(tree,request.getReduceMode());
+		
 		// create a response including the accumulated and reduced tags
 		return new TaggerResponse(shardsResponses.length(), successfulShards,
-				failedShards, shardFailures, tags);
+				failedShards, shardFailures, tree.getAll());
 	}
 
 
 
-	// merge the tags from a shard into the meregMap by start/end
-	//TODO merge tags of same span, merging docids and docs
-	private void merge(List<Tag> shardTags, Map<String, List<Tag>> mergeMap) {
-		for(Tag t : shardTags){
-			String hash = String.valueOf(t.getStart()) + "-" + String.valueOf(t.getEnd());
+
+
+	private void addToTree(IntervalTree<Tag> tree, List<Tag> tags) {
+		
+		for(Tag t : tags){
+			Interval<Tag> interval = new Interval<Tag>(t.getStart(),t.getEnd(),t);
+			tree.addInterval(interval);
+		}
+
+	}
+
+	private void reduceTree(IntervalTree<Tag> tree, String reduce) {
+	
+		// always merge identical intervals to a single Tag
+		
+		mergeIdentical(tree);
+	
+		
+		// no reduction
+		if(reduce.equals("ALL")){
+			return;
+		}
+		
+		// remove any intervals completely contained in another
+		if(reduce.equals("SUB")){
+			tree.removeSubIntervals();
+		}
+
+		// remove any intervals completely contained in another and
+		// any interval which overlaps another preferring the interval to the right
+//		if(reduce.equals("OVERLAP")){
+//			tree.removeSubIntervals();
+//			tree.removeLeftOverlaps();
 			
-			if(!mergeMap.containsKey(hash)){
-				mergeMap.put(hash, new ArrayList<Tag>());
+//		}
+		
+	}
+	
+	
+
+
+	private void mergeIdentical(IntervalTree<Tag> tree) {
+		
+		List<Interval<Tag>> all = tree.getAllIntervals();
+		
+		for( Interval<Tag> i :all){
+			List<Tag> data = i.getData();
+			
+			if(data.size() >1){
+				List<Tag> mergedTags = mergeTags(data);
+				i.setData(mergedTags);
 			}
-			mergeMap.get(hash).add(t);
 			
 		}
-
+		
 	}
 
-	private void reduceMergeMap(List<Tag> tags, Map<String, List<Tag>> mergeMap) {
-		for( List<Tag> tagList : mergeMap.values()){
-			tags.add(mergeTagList(tagList));
-		};
-
-	}
-	
-	
-	private Tag mergeTagList(List<Tag> tagList) {
-		
-		Tag tmpTag = new Tag();
-		Tag firstTag = tagList.get(0);
-		tmpTag.setStart(firstTag.getStart());
-		tmpTag.setEnd(firstTag.getEnd());
-		tmpTag.setMatchText(firstTag.getMatchText());
-		
-		for(Tag t : tagList){
-			tmpTag.mergeDocs(t.getDocs());
+	private List<Tag> mergeTags(List<Tag> tags) {
+		if (tags.size() <=1){
+			return tags;
 		}
 		
-		return tmpTag;
 		
-		// TODO Auto-generated method stub
+		Tag singleTag = new Tag();
+		Tag firstTag = tags.get(0);
+		singleTag.setStart(firstTag.getStart());
+		singleTag.setEnd(firstTag.getEnd());
+		singleTag.setMatchText(firstTag.getMatchText());
 		
-	}
-
-	// TODO do cluster reduction here
-	private void reduceTagClusters(List<Tag> tags, String reduceMode) {
-		// temp do nothing, no reduction
-
+		for(Tag t : tags ){
+			singleTag.mergeDocs(t.getDocs());
+		}
+		List<Tag> mergedList = new ArrayList<Tag>();
+		mergedList.add(singleTag);
+		return mergedList;
 	}
 
 	@Override
