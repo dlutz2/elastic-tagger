@@ -1,6 +1,7 @@
 package org.opensextant.tagger.action;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.elasticsearch.action.support.broadcast.BroadcastOperationRequest;
@@ -17,7 +18,7 @@ public class TaggerRequest extends BroadcastOperationRequest<TaggerRequest> {
 	private String textToBeTagged;
 
 	// the ES type and field to use to tag
-	private Set<String> type;
+	private Set<String> type = new HashSet<String>();
 	private String field;
 
 	// how to reduce overlapping/interacting tags
@@ -52,7 +53,7 @@ public class TaggerRequest extends BroadcastOperationRequest<TaggerRequest> {
 
 	ESLogger logger = ESLoggerFactory.getLogger(TaggerRequest.class.getName());
 
-	TaggerRequest() {
+	public TaggerRequest() {
 	}
 
 	// build a TaggerRequest from a RESTRequest
@@ -173,7 +174,10 @@ public class TaggerRequest extends BroadcastOperationRequest<TaggerRequest> {
 	public void writeTo(StreamOutput out) throws IOException {
 		super.writeTo(out);
 		out.writeString(this.textToBeTagged);
-		out.writeGenericValue(this.type);
+		out.writeInt(this.type.size());
+		for(String t : this.type){
+			out.writeString(t);
+		}
 		out.writeString(this.field);
 		out.writeString(this.reduceMode);
 		out.writeInt(this.tagsLimit);
@@ -194,7 +198,10 @@ public class TaggerRequest extends BroadcastOperationRequest<TaggerRequest> {
 	public void readFrom(StreamInput in) throws IOException {
 		super.readFrom(in);
 		this.textToBeTagged = in.readString();
-		this.type = (Set<String>) in.readGenericValue();
+		int num = in.readInt();
+		for(int i=0; i < num;i++){
+			this.type.add(in.readString());
+		}
 		this.field = in.readString();
 		this.reduceMode = in.readString();
 		this.tagsLimit = in.readInt();

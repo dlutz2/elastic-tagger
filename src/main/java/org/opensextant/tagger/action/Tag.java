@@ -20,6 +20,7 @@ public class Tag implements Streamable {
 	// the string from the document that matched
 	String matchText;
 
+   // the matching documents, organized by elasticseach "type"
 	Map<String, List<ElasticDocument>> docs = new HashMap<String, List<ElasticDocument>>();
 
 	public int getStart() {
@@ -65,6 +66,21 @@ public class Tag implements Streamable {
 		this.docs.get(type).add(doc);
 	}
 
+	
+	
+	public void mergeDocs(Map<String, List<ElasticDocument>> docs) {
+		
+		for(String typ : docs.keySet()){
+			List<ElasticDocument> newDocs = docs.get(typ);
+			if(!this.docs.containsKey(typ)){
+				this.docs.put(typ, new ArrayList<ElasticDocument>());
+			}
+			this.docs.get(typ).addAll(newDocs);
+		}
+	}
+	
+	
+	
 	@Override
 	public void readFrom(StreamInput in) throws IOException {
 		this.start = in.readInt();
@@ -74,8 +90,7 @@ public class Tag implements Streamable {
 		int docEntries = in.readInt();
 		for (int i = 0; i < docEntries; i++) {
 			String key = in.readString();
-			List<ElasticDocument> value = (List<ElasticDocument>) in
-					.readGenericValue();
+			List<ElasticDocument> value = (List<ElasticDocument>) in.readGenericValue();
 			this.docs.put(key, value);
 		}
 

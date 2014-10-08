@@ -2,7 +2,9 @@ package org.opensextant.tagger.action;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
@@ -13,7 +15,6 @@ import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.Terms;
-import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.IntsRef;
 import org.elasticsearch.ElasticsearchException;
@@ -43,6 +44,7 @@ public class TransportTaggerAction
 
 	// the service that gets us access to lucene stuff
 	private final IndicesService indicesService;
+
 
 	@Inject
 	public TransportTaggerAction(Settings settings, ThreadPool threadPool,
@@ -76,7 +78,9 @@ public class TransportTaggerAction
 
 		// the accumulated tags from all shards
 		List<Tag> tags = new ArrayList<Tag>();
-
+		// the tags organized by a hash of their start and end points
+		 Map<String,List<Tag>> mergeMap = new HashMap<String,List<Tag>>();
+		
 		// look at all the shard responses
 		for (int i = 0; i < shardsResponses.length(); i++) {
 			Object shardResponse = shardsResponses.get(i);
@@ -96,7 +100,7 @@ public class TransportTaggerAction
 					// cast to expected type
 					ShardTaggerResponse shardresp = (ShardTaggerResponse) shardResponse;
 					// add the tags from this shard to the accumulated tags
-					merge(tags, shardresp.getTags());
+					merge(shardresp.getTags(), mergeMap);
 
 				} else {
 					// what to do here? we got a response that succeeded but not
@@ -107,16 +111,54 @@ public class TransportTaggerAction
 
 		// reduce the total set of overlapping/interacting tags according to the
 		// requested mode
+		reduceMergeMap(tags,mergeMap);
 		reduceTagClusters(tags, request.getReduceMode());
 		// create a response including the accumulated and reduced tags
 		return new TaggerResponse(shardsResponses.length(), successfulShards,
 				failedShards, shardFailures, tags);
 	}
 
-	// merge the tags from a shard into the accumulated tags
+
+
+	// merge the tags from a shard into the meregMap by start/end
 	//TODO merge tags of same span, merging docids and docs
-	private void merge(List<Tag> totalTags, List<Tag> shardTags) {
-		totalTags.addAll(shardTags);
+	private void merge(List<Tag> shardTags, Map<String, List<Tag>> mergeMap) {
+		for(Tag t : shardTags){
+			String hash = String.valueOf(t.getStart()) + "-" + String.valueOf(t.getEnd());
+			
+			if(!mergeMap.containsKey(hash)){
+				mergeMap.put(hash, new ArrayList<Tag>());
+			}
+			mergeMap.get(hash).add(t);
+			
+		}
+
+	}
+
+	private void reduceMergeMap(List<Tag> tags, Map<String, List<Tag>> mergeMap) {
+		for( List<Tag> tagList : mergeMap.values()){
+			tags.add(mergeTagList(tagList));
+		};
+
+	}
+	
+	
+	private Tag mergeTagList(List<Tag> tagList) {
+		
+		Tag tmpTag = new Tag();
+		Tag firstTag = tagList.get(0);
+		tmpTag.setStart(firstTag.getStart());
+		tmpTag.setEnd(firstTag.getEnd());
+		tmpTag.setMatchText(firstTag.getMatchText());
+		
+		for(Tag t : tagList){
+			tmpTag.mergeDocs(t.getDocs());
+		}
+		
+		return tmpTag;
+		
+		// TODO Auto-generated method stub
+		
 	}
 
 	// TODO do cluster reduction here
