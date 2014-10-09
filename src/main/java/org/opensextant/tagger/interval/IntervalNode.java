@@ -176,7 +176,7 @@ public class IntervalNode<Type> {
 	public void mergeIdenticals(){
 		
 		
-		for(Interval i : this.intervals.keySet()){
+		for(Interval<Type> i : this.intervals.keySet()){
 			List<Interval<Type>> iList = this.intervals.get(i);
 			if(iList.size()>1){
 				Interval<Type> firstInt = iList.get(0);

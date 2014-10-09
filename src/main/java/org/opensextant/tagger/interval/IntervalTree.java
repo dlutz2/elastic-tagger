@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.opensextant.tagger.action.Tag;
 
 /**
  * An Interval Tree is essentially a map from intervals to objects, which can be
