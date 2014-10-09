@@ -173,6 +173,37 @@ public class IntervalNode<Type> {
 		this.rightNode = right;
 	}
 	
+	public void mergeIdenticals(){
+		
+		
+		for(Interval i : this.intervals.keySet()){
+			List<Interval<Type>> iList = this.intervals.get(i);
+			if(iList.size()>1){
+				Interval<Type> firstInt = iList.get(0);
+				for(int c=1; c < iList.size(); c++ ){
+					Interval<Type> tmpInt = iList.get(c);
+					for(Type t : tmpInt.getData()){
+						firstInt.addData(t);
+					};
+				}
+				List<Interval<Type>> newList = new ArrayList<Interval<Type>>();
+				newList.add(firstInt);
+				this.intervals.put(i, newList );
+			}
+		}
+		
+		
+		if(this.leftNode != null){
+			leftNode.mergeIdenticals();
+		}
+		if(this.rightNode != null){
+			rightNode.mergeIdenticals();
+		}
+		
+	}
+	
+	
+	
 	/**
 	 * @param set the set to look on
 	 * @return	  the median of the set, not interpolated

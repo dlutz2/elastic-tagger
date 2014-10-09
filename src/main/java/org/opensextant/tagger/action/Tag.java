@@ -83,7 +83,7 @@ public class Tag implements Streamable {
 		StringBuffer buf = new StringBuffer();
 		buf.append(this.getMatchText() );
 		buf.append(" (" + this.getStart() + "," + this.getEnd() + ")" );
-		
+		buf.append(this.docs);
 		return buf.toString();
 	}
 	

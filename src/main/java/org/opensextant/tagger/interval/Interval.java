@@ -110,4 +110,14 @@ public class Interval<Type> implements Comparable<Interval<Type>> {
 			return 0;
 	}
 
+	
+	public String toString(){
+		StringBuffer buf = new StringBuffer();
+		buf.append(this.start);
+		buf.append(this.end);
+		buf.append(this.data);
+		
+		return buf.toString();
+	}
+	
 }

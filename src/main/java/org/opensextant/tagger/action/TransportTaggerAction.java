@@ -136,11 +136,6 @@ public class TransportTaggerAction
 
 	private void reduceTree(IntervalTree<Tag> tree, String reduce) {
 	
-		// always merge identical intervals to a single Tag
-		
-		mergeIdentical(tree);
-	
-		
 		// no reduction
 		if(reduce.equals("ALL")){
 			return;
@@ -162,44 +157,6 @@ public class TransportTaggerAction
 	}
 	
 	
-
-
-	private void mergeIdentical(IntervalTree<Tag> tree) {
-		
-		List<Interval<Tag>> all = tree.getAllIntervals();
-		
-		for( Interval<Tag> i :all){
-			List<Tag> data = i.getData();
-			
-			if(data.size() >1){
-				List<Tag> mergedTags = mergeTags(data);
-				i.setData(mergedTags);
-			}
-			
-		}
-		
-	}
-
-	private List<Tag> mergeTags(List<Tag> tags) {
-		if (tags.size() <=1){
-			return tags;
-		}
-		
-		
-		Tag singleTag = new Tag();
-		Tag firstTag = tags.get(0);
-		singleTag.setStart(firstTag.getStart());
-		singleTag.setEnd(firstTag.getEnd());
-		singleTag.setMatchText(firstTag.getMatchText());
-		
-		for(Tag t : tags ){
-			singleTag.mergeDocs(t.getDocs());
-		}
-		List<Tag> mergedList = new ArrayList<Tag>();
-		mergedList.add(singleTag);
-		return mergedList;
-	}
-
 	@Override
 	protected ShardTaggerRequest newShardRequest() {
 		return new ShardTaggerRequest();

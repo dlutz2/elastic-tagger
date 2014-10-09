@@ -191,6 +191,7 @@ public class IntervalTree<Type> {
 	public void build() {
 		if (!inSync) {
 			head = new IntervalNode<Type>(intervalList);
+			head.mergeIdenticals();
 			inSync = true;
 			size = intervalList.size();
 		}
