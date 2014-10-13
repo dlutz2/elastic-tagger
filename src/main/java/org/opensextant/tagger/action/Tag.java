@@ -11,7 +11,7 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
 
-public class Tag implements Streamable {
+public class Tag implements Streamable, Comparable<Tag> {
 
 	// the start and end offsets for the text that matched
 	int start;
@@ -20,8 +20,21 @@ public class Tag implements Streamable {
 	// the string from the document that matched
 	String matchText;
 
-   // the matching documents, organized by elasticseach "type"
+	// the matching documents, organized by elasticseach "type"
 	Map<String, List<ElasticDocument>> docs = new HashMap<String, List<ElasticDocument>>();
+
+	// to include this Tag or not in results
+	boolean included = true;
+
+	public Tag(int start, int end) {
+		this.start = start;
+		this.end = end;
+	}
+
+	public Tag() {
+		this.start = 0;
+		this.end = 0;
+	}
 
 	public int getStart() {
 		return start;
@@ -54,7 +67,7 @@ public class Tag implements Streamable {
 	public List<ElasticDocument> getDocs(String type) {
 		return docs.get(type);
 	}
-	
+
 	public void setDocs(Map<String, List<ElasticDocument>> docs) {
 		this.docs = docs;
 	}
@@ -66,29 +79,81 @@ public class Tag implements Streamable {
 		this.docs.get(type).add(doc);
 	}
 
-	
-	
 	public void mergeDocs(Map<String, List<ElasticDocument>> docs) {
-		
-		for(String typ : docs.keySet()){
+
+		for (String typ : docs.keySet()) {
 			List<ElasticDocument> newDocs = docs.get(typ);
-			if(!this.docs.containsKey(typ)){
+			if (!this.docs.containsKey(typ)) {
 				this.docs.put(typ, new ArrayList<ElasticDocument>());
 			}
 			this.docs.get(typ).addAll(newDocs);
 		}
 	}
-	
-	public String toString(){
+
+	public void mergeTag(Tag i) {
+		this.mergeDocs(i.getDocs());
+	}
+
+	public boolean isIncluded() {
+		return included;
+	}
+
+	public void setIncluded(boolean include) {
+		this.included = include;
+	}
+
+	public String toString() {
 		StringBuffer buf = new StringBuffer();
-		buf.append(this.getMatchText() );
-		buf.append(" (" + this.getStart() + "," + this.getEnd() + ")" );
+		buf.append(this.getMatchText());
+		buf.append(" (" + this.getStart() + "," + this.getEnd() + ")");
 		buf.append(this.docs);
 		return buf.toString();
 	}
-	
-	
-	
+
+	// does this Tag contain the given point?
+	public boolean contains(int point) {
+		return point <= end && point >= start;
+	}
+
+	// does this tag interact (is other than disjoint) with the given Tag
+	public boolean interact(Tag other) {
+		return !disjoint(other);
+	}
+
+	// is this tag completely disjoint with the given Tag
+	public boolean disjoint(Tag other) {
+		return other.getEnd() < start || other.getStart() > end;
+	}
+
+	// does this Tag fully contain but is not identical to the given Tag
+	public boolean contains(Tag other) {
+		return !this.identical(other) && this.contains(other.getStart())
+				&& this.contains(other.getEnd());
+	}
+
+	// is this Tag fully contained by but not identical to the given Tag
+	public boolean containedBy(Tag other) {
+		return !this.identical(other) && other.contains(start)
+				&& other.contains(end);
+	}
+
+	// does this Tag have identical span of given Tag
+	public boolean identical(Tag other) {
+		return other.getStart() == start && other.getEnd() == end;
+	}
+
+	// does this Tag overlap the left (lesser) edge of the given tag
+	public boolean overlapLeft(Tag target) {
+		return this.getStart() < target.getStart()
+				&& target.contains(this.getEnd());
+	}
+
+	// does this Tag overlap the right (greater) edge of the given tag
+	public boolean overlapRight(Tag target) {
+		return this.getEnd() > target.getEnd()
+				&& target.contains(this.getStart());
+	}
+
 	@Override
 	public void readFrom(StreamInput in) throws IOException {
 		this.start = in.readInt();
@@ -100,11 +165,11 @@ public class Tag implements Streamable {
 			String key = in.readString();
 			int cnt = in.readInt();
 			List<ElasticDocument> docList = new ArrayList<ElasticDocument>();
-			for(int c=0; c < cnt; c++){
+			for (int c = 0; c < cnt; c++) {
 				ElasticDocument d = new ElasticDocument();
 				d.readFrom(in);
 				docList.add((d));
-			}	
+			}
 			this.docs.put(key, docList);
 		}
 
@@ -121,11 +186,31 @@ public class Tag implements Streamable {
 			out.writeString(entry.getKey());
 			int cnt = entry.getValue().size();
 			out.writeInt(cnt);
-			for(int i=0; i < cnt; i++){
+			for (int i = 0; i < cnt; i++) {
 				entry.getValue().get(i).writeTo(out);
 			}
 		}
 
+	}
+
+	@Override
+	public int compareTo(Tag o) {
+
+		if (!(o instanceof Tag)) {
+			return 0;
+		}
+
+		Tag other = (Tag) o;
+		if (start < other.getStart())
+			return -1;
+		else if (start > other.getStart())
+			return 1;
+		else if (end < other.getEnd())
+			return -1;
+		else if (end > other.getEnd())
+			return 1;
+		else
+			return 0;
 	}
 
 }

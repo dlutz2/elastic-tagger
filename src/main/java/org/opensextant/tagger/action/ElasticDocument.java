@@ -32,23 +32,22 @@ public class ElasticDocument implements Streamable {
 		this.contents = contents;
 	}
 
-	public String toString(){
+	public String toString() {
 		return "Document " + this.id;
 	}
-	
-	
+
 	@Override
 	public void readFrom(StreamInput in) throws IOException {
-		this.id =  in.readString();
-		this.contents =  in.readString();
-		
+		this.id = in.readString();
+		this.contents = in.readString();
+
 	}
 
 	@Override
 	public void writeTo(StreamOutput out) throws IOException {
 		out.writeString(this.id);
 		out.writeString(this.contents);
-		
+
 	}
 
 }

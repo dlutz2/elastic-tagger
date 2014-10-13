@@ -59,7 +59,6 @@ public class TaggerRequestBuilder
 		return this;
 	}
 
-
 	public TaggerRequestBuilder textToBeTagged(String text) {
 		request.setTextToBeTagged(text);
 		return this;

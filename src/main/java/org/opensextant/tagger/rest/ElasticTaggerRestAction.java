@@ -29,8 +29,10 @@ public class ElasticTaggerRestAction extends BaseRestHandler {
 			final Client client, final RestController restController) {
 		super(settings, client);
 
-		restController.registerHandler(RestRequest.Method.GET,"/{index}/_tag/{field}",this);
-		restController.registerHandler(RestRequest.Method.GET,"/{index}/{type}/_tag/{field}", this);
+		restController.registerHandler(RestRequest.Method.GET,
+				"/{index}/_tag/{field}", this);
+		restController.registerHandler(RestRequest.Method.GET,
+				"/{index}/{type}/_tag/{field}", this);
 	}
 
 	@Override

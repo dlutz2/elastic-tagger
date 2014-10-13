@@ -24,20 +24,19 @@ public class TaggerRequest extends BroadcastOperationRequest<TaggerRequest> {
 	// how to reduce overlapping/interacting tags
 	// valid values: "ALL", "LONGEST", "OVERLAP_RIGHT"
 	private String reduceMode;
-	
+
 	// maximum number of tags to include in a response
 	private int tagsLimit;
-	
+
 	// include the text from the document in the response?
 	private boolean includeMatchText;
-	
+
 	// return only document ids, not document content
 	private boolean idsOnly;
-	
+
 	// correct for stopwords and/or alternate tokens?
 	private boolean skipAltTokens;
 	private boolean ignoreStopwords;
-	
 
 	// Request parameters
 	private static final String INDEX = "index";
@@ -45,11 +44,11 @@ public class TaggerRequest extends BroadcastOperationRequest<TaggerRequest> {
 	private static final String TYPES = "type";
 	private static final String FIELD = "field";
 	private static final String REDUCE_MODE = "reducemode";
-	private static final String TAGS_LIMIT = "tagsLimit";//int
-	private static final String INCLUDE_MATCH_TEXT = "matchText";//boolean
-	private static final String DOC_IDS_ONLY = "docIDsonly";//boolean
-	private static final String SKIP_ALT_TOKENS = "skipAltTokens";//boolean
-	private static final String IGNORE_STOPWORDS = "ignoreStopwords";//boolean
+	private static final String TAGS_LIMIT = "tagsLimit";// int
+	private static final String INCLUDE_MATCH_TEXT = "matchText";// boolean
+	private static final String DOC_IDS_ONLY = "docIDsonly";// boolean
+	private static final String SKIP_ALT_TOKENS = "skipAltTokens";// boolean
+	private static final String IGNORE_STOPWORDS = "ignoreStopwords";// boolean
 
 	ESLogger logger = ESLoggerFactory.getLogger(TaggerRequest.class.getName());
 
@@ -58,8 +57,8 @@ public class TaggerRequest extends BroadcastOperationRequest<TaggerRequest> {
 
 	// build a TaggerRequest from a RESTRequest
 	public TaggerRequest(RestRequest request) {
-		super( Strings.splitStringByCommaToArray(request.param(INDEX)));
-	
+		super(Strings.splitStringByCommaToArray(request.param(INDEX)));
+
 		// Check SOURCE and then check request content, fail if both null
 		this.textToBeTagged = request.param(SOURCE);
 		if (this.textToBeTagged == null) {
@@ -71,25 +70,25 @@ public class TaggerRequest extends BroadcastOperationRequest<TaggerRequest> {
 		}
 
 		// get the rest of the request params
-		
+
 		String typs = request.param(TYPES);
-		if(typs != null){
+		if (typs != null) {
 			this.type = Strings.splitStringByCommaToSet(typs);
-		}else{
-			
+		} else {
+
 		}
 		this.field = request.param(FIELD);
 		this.reduceMode = request.param(REDUCE_MODE);
-		if(this.reduceMode == null){
+		if (this.reduceMode == null) {
 			this.reduceMode = "ALL";
 		}
 		this.tagsLimit = request.paramAsInt(TAGS_LIMIT, -1);
-		this.includeMatchText = request.paramAsBoolean(INCLUDE_MATCH_TEXT, true);
+		this.includeMatchText = request
+				.paramAsBoolean(INCLUDE_MATCH_TEXT, true);
 		this.idsOnly = request.paramAsBoolean(DOC_IDS_ONLY, false);
 		this.skipAltTokens = request.paramAsBoolean(SKIP_ALT_TOKENS, false);
 		this.ignoreStopwords = request.paramAsBoolean(IGNORE_STOPWORDS, false);
 	}
-
 
 	public String getTextToBeTagged() {
 		return textToBeTagged;
@@ -175,7 +174,7 @@ public class TaggerRequest extends BroadcastOperationRequest<TaggerRequest> {
 		super.writeTo(out);
 		out.writeString(this.textToBeTagged);
 		out.writeInt(this.type.size());
-		for(String t : this.type){
+		for (String t : this.type) {
 			out.writeString(t);
 		}
 		out.writeString(this.field);
@@ -199,7 +198,7 @@ public class TaggerRequest extends BroadcastOperationRequest<TaggerRequest> {
 		super.readFrom(in);
 		this.textToBeTagged = in.readString();
 		int num = in.readInt();
-		for(int i=0; i < num;i++){
+		for (int i = 0; i < num; i++) {
 			this.type.add(in.readString());
 		}
 		this.field = in.readString();

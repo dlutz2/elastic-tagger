@@ -28,7 +28,7 @@ public class TaggerResponse extends BroadcastOperationResponse {
 	 * @return the tags
 	 */
 	public List<Tag> getTags() {
-		if(tags == null){
+		if (tags == null) {
 			return new ArrayList<Tag>();
 		}
 		return tags;

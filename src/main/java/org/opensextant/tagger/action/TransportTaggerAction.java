@@ -35,8 +35,7 @@ import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.opensextant.solrtexttagger.TagClusterReducer;
 import org.opensextant.solrtexttagger.Tagger;
-import org.opensextant.tagger.interval.Interval;
-import org.opensextant.tagger.interval.IntervalTree;
+import org.opensextant.tagger.interval.TagTree;
 
 public class TransportTaggerAction
 		extends
@@ -44,7 +43,6 @@ public class TransportTaggerAction
 
 	// the service that gets us access to lucene stuff
 	private final IndicesService indicesService;
-
 
 	@Inject
 	public TransportTaggerAction(Settings settings, ThreadPool threadPool,
@@ -76,15 +74,9 @@ public class TransportTaggerAction
 		int failedShards = 0;
 		List<ShardOperationFailedException> shardFailures = null;
 
-		// an interval tree to store all returned Tags 
-		IntervalTree<Tag> tree = new IntervalTree<Tag>();
-		
-		
-		
-		// the accumulated tags from all shards
-		//List<Tag> tags = new ArrayList<Tag>();
+		// an interval tree to store all returned Tags
+		TagTree tree = new TagTree();
 
-		
 		// look at all the shard responses
 		for (int i = 0; i < shardsResponses.length(); i++) {
 			Object shardResponse = shardsResponses.get(i);
@@ -103,9 +95,8 @@ public class TransportTaggerAction
 				if (shardResponse instanceof ShardTaggerResponse) {
 					// cast to expected type
 					ShardTaggerResponse shardresp = (ShardTaggerResponse) shardResponse;
-					// add the tags from this shard to the accumulated tags in the tree
-					addToTree(tree,shardresp.getTags());
-
+					// add the tags from this shard to the tree
+					tree.addTags(shardresp.getTags());
 				} else {
 					// what to do here? we got a response that succeeded but not
 					// expected type
@@ -113,50 +104,20 @@ public class TransportTaggerAction
 			}// end of successful shard
 		}// end of shard loop
 
-		// reduce the total set of overlapping/interacting tags according to the reduce mode
-		reduceTree(tree,request.getReduceMode());
-		
+		// build the tree
+		tree.build();
+		// reduce the total set of overlapping/interacting tags according to the
+		// reduce mode
+		tree.reduceTree(request.getReduceMode());
+
+		// get all tags after reduction
+		List<Tag> tags = tree.getIncludedTags();
+
 		// create a response including the accumulated and reduced tags
 		return new TaggerResponse(shardsResponses.length(), successfulShards,
-				failedShards, shardFailures, tree.getAll());
+				failedShards, shardFailures, tags);
 	}
 
-
-
-
-
-	private void addToTree(IntervalTree<Tag> tree, List<Tag> tags) {
-		
-		for(Tag t : tags){
-			Interval<Tag> interval = new Interval<Tag>(t.getStart(),t.getEnd(),t);
-			tree.addInterval(interval);
-		}
-
-	}
-
-	private void reduceTree(IntervalTree<Tag> tree, String reduce) {
-	
-		// no reduction
-		if(reduce.equals("ALL")){
-			return;
-		}
-		
-		// remove any intervals completely contained in another
-		if(reduce.equals("SUB")){
-			tree.removeSubIntervals();
-		}
-
-		// remove any intervals completely contained in another and
-		// any interval which overlaps another preferring the interval to the right
-//		if(reduce.equals("OVERLAP")){
-//			tree.removeSubIntervals();
-//			tree.removeLeftOverlaps();
-			
-//		}
-		
-	}
-	
-	
 	@Override
 	protected ShardTaggerRequest newShardRequest() {
 		return new ShardTaggerRequest();
@@ -293,19 +254,21 @@ public class TransportTaggerAction
 						String[] pieces = uid.split("#", 2);
 						String docType = pieces[0];
 						String docID = pieces[1];
-						// only add documents that come from the requested type(s)
+						// only add documents that come from the requested
+						// type(s)
 						if (types == null || types.contains(docType)) {
-							
+
 							// create an Elastic doc to hold ID and contents
 							ElasticDocument tmpDoc = new ElasticDocument();
 							tmpDoc.setId(docID);
 							// add the document contents if requested
 							if (!idOnly) {
 								// content comes from the "_source" field
-								String cont = doc.getBinaryValue("_source").utf8ToString();
+								String cont = doc.getBinaryValue("_source")
+										.utf8ToString();
 								tmpDoc.setContents(cont);
 							}
-							
+
 							// add the document to the tag
 							tag.addDoc(docType, tmpDoc);
 						}

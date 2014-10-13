@@ -23,25 +23,24 @@ public class Tagger {
 		String type = args[2];
 		String field = args[3];
 		String text = args[4];
-		
+
 		Tagger tagger = new Tagger(host);
-		
+
 		List<Tag> tags = tagger.tag(index, type, field, text);
-		
-		for(Tag tag : tags){
-		  System.out.println(tag);
+
+		for (Tag tag : tags) {
+			System.out.println(tag);
 		}
 		tagger.close();
 
-
 	}
 
-	public Tagger(String host){
-		 tc = new TransportClient();
-		client = tc.addTransportAddress(new InetSocketTransportAddress(host, 9300));
+	public Tagger(String host) {
+		tc = new TransportClient();
+		client = tc.addTransportAddress(new InetSocketTransportAddress(host,
+				9300));
 		// TODO how to test if client actually connected?
 	}
-	
 
 	public void close() {
 		tc.close();
@@ -58,9 +57,8 @@ public class Tagger {
 		taggerRequest.setType(types);
 		taggerRequest.setField(field);
 		taggerRequest.setTextToBeTagged(text);
-		taggerRequest.setReduceMode("SUB");
+		taggerRequest.setReduceMode("OVERLAP_RIGHT");
 		taggerRequest.setIncludeMatchText(true);
-		
 
 		// execute TaggerRequest and get TaggerResponse,
 
