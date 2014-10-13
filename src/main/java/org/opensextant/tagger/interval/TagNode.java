@@ -1,7 +1,9 @@
 package org.opensextant.tagger.interval;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -48,7 +50,7 @@ public class TagNode {
 				nodeTags.add(tag);
 			}
 		}
-
+		
 		if (left.size() > 0)
 			leftNode = new TagNode(left);
 		if (right.size() > 0)
@@ -163,6 +165,49 @@ public class TagNode {
 		if (target.getEnd() > center && rightNode != null)
 			result.addAll(rightNode.queryOverlapRight(target));
 		return result;
+	}
+
+	public void mergeIdenticals() {
+
+		if (nodeTags.size() > 1) {
+			
+
+		Map<String, List<Tag>> tagMap = new HashMap<String, List<Tag>>();
+
+		for (Tag t : nodeTags) {
+			String key = String.valueOf(t.getStart()) + "|"
+					+ String.valueOf(t.getEnd());
+			if (!tagMap.containsKey(key)) {
+				tagMap.put(key, new ArrayList<Tag>());
+			}
+			tagMap.get(key).add(t);
+		}
+
+		for (String key : tagMap.keySet()) {
+			List<Tag> tmpList = tagMap.get(key);
+			if (tmpList.size() > 1) {
+
+				Tag firstTag = tmpList.get(0);
+				for (int c = 1; c < tmpList.size(); c++) {
+					Tag tmpTag = tmpList.get(c);
+					firstTag.mergeDocs(tmpTag.getDocs());
+					tmpTag.setIncluded(false);
+				}
+
+			}
+
+		}
+
+		}
+		if(this.leftNode != null){
+			this.leftNode.mergeIdenticals();
+		}
+		
+		if(this.rightNode != null){
+			this.rightNode.mergeIdenticals();
+		}
+		
+		
 	}
 
 	// getters and setters

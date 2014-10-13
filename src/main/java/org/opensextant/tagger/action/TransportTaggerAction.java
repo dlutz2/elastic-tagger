@@ -111,7 +111,8 @@ public class TransportTaggerAction
 		tree.reduceTree(request.getReduceMode());
 
 		// get all tags after reduction
-		List<Tag> tags = tree.getIncludedTags();
+		//List<Tag> tags = tree.getIncludedTags();
+		List<Tag> tags = tree.getAllTags();
 
 		// create a response including the accumulated and reduced tags
 		return new TaggerResponse(shardsResponses.length(), successfulShards,

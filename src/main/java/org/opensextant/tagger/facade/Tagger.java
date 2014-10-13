@@ -57,8 +57,9 @@ public class Tagger {
 		taggerRequest.setType(types);
 		taggerRequest.setField(field);
 		taggerRequest.setTextToBeTagged(text);
-		taggerRequest.setReduceMode("OVERLAP_RIGHT");
+		taggerRequest.setReduceMode("NONE");
 		taggerRequest.setIncludeMatchText(true);
+		taggerRequest.setIdsOnly(false);
 
 		// execute TaggerRequest and get TaggerResponse,
 

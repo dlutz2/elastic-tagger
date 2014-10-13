@@ -42,22 +42,26 @@ public class TagTree {
 
 	public void reduceTree(String mode) {
 
+		
+		this.head.mergeIdenticals();
+		
 		if (mode.equalsIgnoreCase("NONE")) {
 			return;
 		}
 
 		List<Tag> tags = this.getAllTags();
-
+		
+	/*	
 		// merge tags with identical spans
 		if (mode.equalsIgnoreCase("IDENTICAL") || mode.equalsIgnoreCase("SUB")
 				|| mode.equalsIgnoreCase("OVERLAP_LEFT")
 				|| mode.equalsIgnoreCase("OVERLAP_RIGHT")) {
 			for (Tag t : tags) {
 				if (t.isIncluded()) {
-					List<Tag> ids = this.getTagsIdentical(t.getStart(),
-							t.getEnd());
+					List<Tag> ids = this.getTagsIdentical(t.getStart(),t.getEnd());
 					for (Tag i : ids) {
-						if (i.isIncluded() && i != t) {
+						if ( i != t) {
+						//if (i.isIncluded() && i != t) {
 							t.mergeTag(i);
 							i.setIncluded(false);
 						}
@@ -66,7 +70,7 @@ public class TagTree {
 			}
 
 		}
-
+*/
 		// remove sub tags
 		if (mode.equalsIgnoreCase("SUB")
 				|| mode.equalsIgnoreCase("OVERLAP_LEFT")

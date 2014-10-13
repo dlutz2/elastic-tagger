@@ -106,6 +106,7 @@ public class Tag implements Streamable, Comparable<Tag> {
 		StringBuffer buf = new StringBuffer();
 		buf.append(this.getMatchText());
 		buf.append(" (" + this.getStart() + "," + this.getEnd() + ")");
+		buf.append(" (Included:" + this.included +")");
 		buf.append(this.docs);
 		return buf.toString();
 	}
