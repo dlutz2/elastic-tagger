@@ -54,12 +54,14 @@ public class Tagger {
 		Set<String> types = new HashSet<String>();
 		types.add(type);
 
+		taggerRequest.setTextToBeTagged(text);
 		taggerRequest.setType(types);
 		taggerRequest.setField(field);
-		taggerRequest.setTextToBeTagged(text);
-		taggerRequest.setReduceMode("NONE");
-		taggerRequest.setIncludeMatchText(true);
-		taggerRequest.setIdsOnly(false);
+		
+		//taggerRequest.setReduceMode("NONE");
+		//taggerRequest.setIncludeMatchText(true);
+		//taggerRequest.setIdsOnly(false);
+		taggerRequest.setQuery("SEARCH_ONLY:F");
 
 		// execute TaggerRequest and get TaggerResponse,
 

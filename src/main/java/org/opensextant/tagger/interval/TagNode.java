@@ -47,7 +47,11 @@ public class TagNode {
 			else if (tag.getStart() > median)
 				right.add(tag);
 			else {
-				nodeTags.add(tag);
+				if (nodeTags.contains(tag)){
+					System.out.println();
+				}
+				@SuppressWarnings("unused")
+				boolean z = nodeTags.add(tag);
 			}
 		}
 		

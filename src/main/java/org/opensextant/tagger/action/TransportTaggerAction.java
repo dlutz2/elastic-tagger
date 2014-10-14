@@ -9,12 +9,21 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.Terms;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.Collector;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Scorer;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.IntsRef;
+import org.apache.lucene.util.OpenBitSet;
+import org.apache.lucene.util.Version;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
@@ -111,8 +120,8 @@ public class TransportTaggerAction
 		tree.reduceTree(request.getReduceMode());
 
 		// get all tags after reduction
-		//List<Tag> tags = tree.getIncludedTags();
-		List<Tag> tags = tree.getAllTags();
+		List<Tag> tags = tree.getIncludedTags();
+		// List<Tag> tags = tree.getAllTags();
 
 		// create a response including the accumulated and reduced tags
 		return new TaggerResponse(shardsResponses.length(), successfulShards,
@@ -154,6 +163,8 @@ public class TransportTaggerAction
 		final boolean idsOnly = tagRequest.isIdsOnly();
 		final boolean addMatchText = tagRequest.isIncludeMatchText();
 
+		String query = tagRequest.getQuery();
+
 		// get the Reader associated with the requested index
 		final InternalIndexShard indexShard = (InternalIndexShard) indicesService
 				.indexServiceSafe(request.index()).shardSafe(request.shardId());
@@ -173,7 +184,7 @@ public class TransportTaggerAction
 		try {
 			Fields fields = MultiFields.getFields(reader);
 			terms = fields.terms(field);
-			docsToUse = docsToUse(reader);
+			docsToUse = docsToUse(reader, query, analyzer);
 		} catch (IOException e1) {
 			logger.error("Error trying to get fields or terms from Lucene index in TaggerTransportAction:"
 					+ e1.getMessage());
@@ -303,11 +314,57 @@ public class TransportTaggerAction
 		return new ShardTaggerResponse(request.index(), request.shardId(), tags);
 	}
 
-	// TODO how to get list of docs that match query and are live?
 	// what documents to include in tagging
-	private Bits docsToUse(IndexReader reader) {
-		// for now get all live (non-deleted) docs
-		return MultiFields.getLiveDocs(reader);
+	private Bits docsToUse(IndexReader reader, String q, Analyzer analyzer) {
+
+		IndexSearcher searcher = new IndexSearcher(reader);
+		final OpenBitSet bits = new OpenBitSet(reader.maxDoc());
+
+		if (q != null) {
+			Version ver = Version.LUCENE_4_9;
+			QueryParser qp = new QueryParser(ver, q, analyzer);
+
+			Query query;
+			try {
+				query = qp.parse(q);
+			} catch (ParseException e) {
+				logger.error("Error trying to parse query in TaggerTransportAction: ("
+						+ q + ")" + e.getMessage());
+				throw new ElasticsearchException(e.getMessage(), e);
+			}
+
+			try {
+				searcher.search(query, new Collector() {
+					private int docBase;
+
+					// ignore scorer
+					public void setScorer(Scorer scorer) {
+					}
+
+					// accept docs out of order (for a BitSet it doesn't matter)
+					public boolean acceptsDocsOutOfOrder() {
+						return true;
+					}
+
+					public void collect(int doc) {
+						bits.set(doc + docBase);
+					}
+
+					public void setNextReader(AtomicReaderContext context) {
+						this.docBase = context.docBase;
+					}
+				});
+			} catch (IOException e) {
+				logger.error("Error trying to query for documents to use in TaggerTransportAction:"
+						+ e.getMessage());
+				throw new ElasticsearchException(e.getMessage(), e);
+			}
+		} else {
+			// all live (non-deleted) docs
+			return MultiFields.getLiveDocs(reader);
+		}
+
+		return bits;
 	}
 
 	@Override

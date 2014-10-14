@@ -15,7 +15,7 @@ import org.elasticsearch.rest.RestRequest;
 public class TaggerRequest extends BroadcastOperationRequest<TaggerRequest> {
 
 	// the text to be tagged
-	private String textToBeTagged;
+	private String textToBeTagged ="";
 
 	// the ES type and field to use to tag
 	private Set<String> type = new HashSet<String>();
@@ -23,20 +23,23 @@ public class TaggerRequest extends BroadcastOperationRequest<TaggerRequest> {
 
 	// how to reduce overlapping/interacting tags
 	// valid values: "ALL", "LONGEST", "OVERLAP_RIGHT"
-	private String reduceMode;
+	private String reduceMode = "SUB";
 
 	// maximum number of tags to include in a response
-	private int tagsLimit;
+	private int tagsLimit = -1;
 
 	// include the text from the document in the response?
-	private boolean includeMatchText;
+	private boolean includeMatchText = true;
 
 	// return only document ids, not document content
-	private boolean idsOnly;
+	private boolean idsOnly = false;
 
 	// correct for stopwords and/or alternate tokens?
-	private boolean skipAltTokens;
-	private boolean ignoreStopwords;
+	private boolean skipAltTokens = false;
+	private boolean ignoreStopwords = false;
+	
+	// the query to select a subset of documents to use for tagging
+	private String query = null;
 
 	// Request parameters
 	private static final String INDEX = "index";
@@ -49,6 +52,7 @@ public class TaggerRequest extends BroadcastOperationRequest<TaggerRequest> {
 	private static final String DOC_IDS_ONLY = "docIDsonly";// boolean
 	private static final String SKIP_ALT_TOKENS = "skipAltTokens";// boolean
 	private static final String IGNORE_STOPWORDS = "ignoreStopwords";// boolean
+	private static final String QUERY = "query";// String
 
 	ESLogger logger = ESLoggerFactory.getLogger(TaggerRequest.class.getName());
 
@@ -78,16 +82,17 @@ public class TaggerRequest extends BroadcastOperationRequest<TaggerRequest> {
 
 		}
 		this.field = request.param(FIELD);
-		this.reduceMode = request.param(REDUCE_MODE);
-		if (this.reduceMode == null) {
-			this.reduceMode = "ALL";
-		}
+		this.reduceMode = request.param(REDUCE_MODE, "SUB");
+
 		this.tagsLimit = request.paramAsInt(TAGS_LIMIT, -1);
 		this.includeMatchText = request
 				.paramAsBoolean(INCLUDE_MATCH_TEXT, true);
 		this.idsOnly = request.paramAsBoolean(DOC_IDS_ONLY, false);
 		this.skipAltTokens = request.paramAsBoolean(SKIP_ALT_TOKENS, false);
 		this.ignoreStopwords = request.paramAsBoolean(IGNORE_STOPWORDS, false);
+		
+		this.query = request.param(QUERY,"");
+
 	}
 
 	public String getTextToBeTagged() {
@@ -162,6 +167,14 @@ public class TaggerRequest extends BroadcastOperationRequest<TaggerRequest> {
 		this.ignoreStopwords = ignoreStopwords;
 	}
 
+	public String getQuery() {
+		return query;
+	}
+
+	public void setQuery(String query) {
+		this.query = query;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -172,18 +185,33 @@ public class TaggerRequest extends BroadcastOperationRequest<TaggerRequest> {
 	@Override
 	public void writeTo(StreamOutput out) throws IOException {
 		super.writeTo(out);
-		out.writeString(this.textToBeTagged);
+		if(this.textToBeTagged !=  null){
+			out.writeString(this.textToBeTagged);
+		}else{
+			out.writeString(" ");
+		}		
 		out.writeInt(this.type.size());
 		for (String t : this.type) {
 			out.writeString(t);
 		}
-		out.writeString(this.field);
+		if(this.field != null){
+			out.writeString(this.field);
+		}else{
+			out.writeString(" ");
+		}
+		
 		out.writeString(this.reduceMode);
 		out.writeInt(this.tagsLimit);
 		out.writeBoolean(this.includeMatchText);
 		out.writeBoolean(this.idsOnly);
 		out.writeBoolean(this.skipAltTokens);
 		out.writeBoolean(this.ignoreStopwords);
+		if(this.query != null){
+			out.writeString(this.query);
+		}else{
+			out.writeString(" ");
+		}
+		
 	}
 
 	/*
@@ -196,18 +224,37 @@ public class TaggerRequest extends BroadcastOperationRequest<TaggerRequest> {
 	@Override
 	public void readFrom(StreamInput in) throws IOException {
 		super.readFrom(in);
-		this.textToBeTagged = in.readString();
+		String tmpTxt = in.readString();
+		if(tmpTxt != null && !tmpTxt.equals(" ")){
+			this.textToBeTagged = tmpTxt;
+		}else{
+			this.textToBeTagged = null;
+		}
+		
 		int num = in.readInt();
 		for (int i = 0; i < num; i++) {
 			this.type.add(in.readString());
 		}
-		this.field = in.readString();
+		String tmpFld = in.readString();
+		if(tmpFld != null && !tmpFld.equals(" ")){
+			this.field = tmpFld;
+		}else{
+			this.field = "";
+		}
+				
 		this.reduceMode = in.readString();
 		this.tagsLimit = in.readInt();
 		this.includeMatchText = in.readBoolean();
 		this.idsOnly = in.readBoolean();
 		this.skipAltTokens = in.readBoolean();
 		this.ignoreStopwords = in.readBoolean();
+		String tmpQ = in.readString();
+		if(tmpQ != null && !tmpQ.equals(" ")){
+			this.query = tmpQ;
+		}else{
+			this.query = null;
+		}
+		
 	}
 
 }

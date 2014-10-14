@@ -8,9 +8,7 @@ import org.elasticsearch.common.io.stream.Streamable;
 
 import com.fasterxml.jackson.annotation.JsonRawValue;
 
-// This class is just a container to associate an elsticsearch document id
-// with the (optional) contents of that document. 
-public class ElasticDocument implements Streamable {
+public class ElasticDocument implements Streamable{
 
 	String id;
 	@JsonRawValue
@@ -32,22 +30,27 @@ public class ElasticDocument implements Streamable {
 		this.contents = contents;
 	}
 
-	public String toString() {
-		return "Document " + this.id;
+	public String toString(){
+		StringBuffer buf = new StringBuffer();
+		buf.append("ID=" + this.id);
+		buf.append(" ");
+		buf.append("Contents=" + this.contents);
+		return buf.toString();
 	}
-
+	
+	
+	
 	@Override
 	public void readFrom(StreamInput in) throws IOException {
-		this.id = in.readString();
-		this.contents = in.readString();
-
+		this.id =  in.readString();
+		this.contents =  in.readString();
+		
 	}
 
 	@Override
 	public void writeTo(StreamOutput out) throws IOException {
 		out.writeString(this.id);
 		out.writeString(this.contents);
-
 	}
 
 }

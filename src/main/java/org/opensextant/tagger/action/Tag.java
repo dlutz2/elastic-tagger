@@ -160,7 +160,7 @@ public class Tag implements Streamable, Comparable<Tag> {
 		this.start = in.readInt();
 		this.end = in.readInt();
 		this.matchText = in.readString();
-
+		this.included = in.readBoolean();
 		int docEntries = in.readInt();
 		for (int i = 0; i < docEntries; i++) {
 			String key = in.readString();
@@ -181,7 +181,7 @@ public class Tag implements Streamable, Comparable<Tag> {
 		out.writeInt(this.start);
 		out.writeInt(this.end);
 		out.writeString(this.matchText);
-
+		out.writeBoolean(this.included);
 		out.writeInt(this.docs.size());
 		for (Entry<String, List<ElasticDocument>> entry : this.docs.entrySet()) {
 			out.writeString(entry.getKey());
@@ -211,7 +211,39 @@ public class Tag implements Streamable, Comparable<Tag> {
 		else if (end > other.getEnd())
 			return 1;
 		else
-			return 0;
+			if(o.docs == this.docs){
+				return 0;
+			}
+		if(o.docs.size() != this.docs.size()){
+			return o.docs.size() - this.docs.size()  ;
+		}
+
+		return o.docs.hashCode() - this.docs.hashCode();
+		
+	}
+	
+/*
+	@Override
+	public int hashCode() {
+		// TODO Auto-generated method stub
+		return super.hashCode();
+	}
+*/
+	@Override
+	public boolean equals(Object other) {
+		// TODO Auto-generated method stub
+		if(!(other instanceof Tag)){
+			return false;
+		}
+		Tag otherTag =  (Tag)other;
+		
+		boolean s = (otherTag.start == start);
+		boolean e = (otherTag.end == end);
+		boolean d = (otherTag.docs == docs);
+		return s && e && d;
 	}
 
+	
+	
+	
 }
