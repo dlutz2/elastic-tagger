@@ -1,4 +1,4 @@
-package org.opensextant.tagger.action;
+package org.opensextant.tagger;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -222,16 +222,9 @@ public class Tag implements Streamable, Comparable<Tag> {
 		
 	}
 	
-/*
-	@Override
-	public int hashCode() {
-		// TODO Auto-generated method stub
-		return super.hashCode();
-	}
-*/
+
 	@Override
 	public boolean equals(Object other) {
-		// TODO Auto-generated method stub
 		if(!(other instanceof Tag)){
 			return false;
 		}

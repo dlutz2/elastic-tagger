@@ -44,6 +44,8 @@ import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.opensextant.solrtexttagger.TagClusterReducer;
 import org.opensextant.solrtexttagger.Tagger;
+import org.opensextant.tagger.ElasticDocument;
+import org.opensextant.tagger.Tag;
 import org.opensextant.tagger.interval.TagTree;
 
 public class TransportTaggerAction

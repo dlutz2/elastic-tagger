@@ -7,7 +7,7 @@ import java.util.Set;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
-import org.opensextant.tagger.action.Tag;
+import org.opensextant.tagger.Tag;
 import org.opensextant.tagger.action.TaggerAction;
 import org.opensextant.tagger.action.TaggerRequest;
 import org.opensextant.tagger.action.TaggerResponse;

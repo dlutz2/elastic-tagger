@@ -8,6 +8,7 @@ import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastOperationResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.opensextant.tagger.Tag;
 
 public class TaggerResponse extends BroadcastOperationResponse {
 

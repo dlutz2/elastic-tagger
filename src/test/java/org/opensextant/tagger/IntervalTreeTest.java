@@ -1,6 +1,5 @@
 package org.opensextant.tagger;
 
-import org.opensextant.tagger.action.Tag;
 import org.opensextant.tagger.interval.TagTree;
 
 public class IntervalTreeTest {

@@ -6,6 +6,7 @@ import java.util.List;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.opensextant.tagger.Tag;
 
 public class ShardTaggerResponse extends BroadcastShardOperationResponse {
 

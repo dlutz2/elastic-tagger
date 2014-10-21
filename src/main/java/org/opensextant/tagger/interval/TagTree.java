@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.opensextant.tagger.action.Tag;
+import org.opensextant.tagger.Tag;
 
 public class TagTree {
 

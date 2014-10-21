@@ -1,4 +1,4 @@
-package org.opensextant.tagger.action;
+package org.opensextant.tagger;
 
 import java.io.IOException;
 

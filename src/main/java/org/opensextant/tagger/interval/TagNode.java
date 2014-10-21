@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import org.opensextant.tagger.action.Tag;
+import org.opensextant.tagger.Tag;
 
 public class TagNode {
 
